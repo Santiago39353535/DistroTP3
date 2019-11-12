@@ -21,8 +21,12 @@ class SwitchController:
     packet = event.parsed
 
     #si viene de un host q no tengo anotado lo agrego a la lista de hosts alcanzables
-    if (packet.src not in self.clientes):
+    if (event.port not in self.linkTo.values()):
       self.clientes[packet.src] = event.port
+      #print(packet.src)
+      #print("lete el packete de arriba wacho")
+    print("mira el dic clientes")
+    print(self.clientes)
 
     #ask4help
     self.boss_controler.helpSwitchSendMsg(self,packet)

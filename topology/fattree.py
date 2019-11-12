@@ -13,15 +13,13 @@ class FatTree(Topo):
             for i in range(2**lv):
                 sw = self.addSwitch(prefijoSW+'_'+str(lv)+'_'+str(i))
                 nivel.append(sw)
-            self.my_switchs.append(nivel)
-            print("Llegue switch creacion nivel "+str(lv))
+            self.my_switchs.append(nivel)            
 
         ###Creacion hosts
         prefijoHost = "h"
         for i in range((2**(niveles-1))+3):
             host = self.addHost(prefijoHost+'_'+str(i))
             self.my_hosts.append(host)
-            print("creacion host "+str(i))
 
         ###Conexion de los hosts
         for i in range(3):
@@ -38,4 +36,5 @@ class FatTree(Topo):
                     for switch2 in self.my_switchs[lv+1]:
                         self.addLink(switch1, switch2)
 
+#topos = FatTree(4)
 topos = { 'fattree': FatTree }

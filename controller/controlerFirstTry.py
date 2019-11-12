@@ -39,6 +39,8 @@ class Controller:
       self.connections.add(event.connection)
       sw = SwitchController(event.dpid, event.connection,self)
       self.switches[event.dpid] = sw
+      #print(event.dpid)
+      #print("holaaaaaaaaaaaaaa arriba esta el switch")
 
   def _handle_LinkEvent(self, event):
     """
@@ -46,6 +48,8 @@ class Controller:
     """
     link = event.link
 
+    print("link es")
+    print(link)
     self.switches[link.dpid1].addLinkFromPortTo(link.port1,link.dpid2)
     self.switches[link.dpid2].addLinkFromPortTo(link.port2,link.dpid1)
 
@@ -76,41 +80,32 @@ class Controller:
         for vecino in vecinos:
             distanciaNueva = distancias[switchActual] + 1
             if distanciaNueva < distancias[switchActual]:
-                distancias[switchActual] = distanciaNueva
-                prevSwitch[switchActual] = switchActual
+                distancias[vecino] = distanciaNueva
+                prevSwitch[vecino] = switchActual
 
         switchesAVisitar.remove(switchActual)
 
-
-
-    posibleSwitchDeSalida = {}
+    switch_dst = None
     for switch in self.switches.values():
+        #print(switch.getHostsConectados())
+        #print(packet.dst)
         if packet.dst in switch.getHostsConectados():
-            posibleSwitchDeSalida[switch] = switch.getPortForHost(packet.dst)
-
-        #Se desconoce como llegar al host
-        if len(posibleSwitchDeSalida.keys()) == 0:
-          print("Heeeeeeeeeeelp")
-          return
-
-    if switchControllerSrc in posibleSwitchDeSalida:
-        switchControllerSrc.sendPacketThourgh(packet,posibleSwitchDeSalida[switchControllerSrc])
+            switch_dst = switch
+            break
+    if switch_dst == None:
+        print("Problemaas")
         return
 
-    #itero lista y creo mi camino min para cada posible salida
-    camino = {}
-    for switchActual in posibleSwitchDeSalida.keys():
-        camino[switchActual] = deque()
-        while prevSwitch[switchActual] is not None:
-            camino[switchActual].appendleft(switchActual)
-            switchActual = prevSwitch[switchActual]
-        #agrego src
-        if camino[switchActual]:
-            camino[switchActual].appendleft(switchControllerSrc)
+    camino = deque()
+    switchActual = switch_dst
+    while prevSwitch[switchActual] is not None:
+        camino.appendleft(switchActual)
+        switchActual = prevSwitch[switchActual]
+    if camino:
+        camino.appendleft(switchActual)
+    IdSigueinteSwitch = camino[1].dpid
 
     #x ahora uso el primer camino en la lista x q no se como sacar el minimo camino del diccionaio //superbug
-    switchElegidoDeSalida = posibleSwitchDeSalida.keys()[0]
-    IdSigueinteSwitch = camino[switchElegidoDeSalida][1].dpid
     switchControllerSrc.sendPacketThourgh(packet,switchControllerSrc.getPortFor(IdSigueinteSwitch))
 
 
