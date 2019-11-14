@@ -69,3 +69,15 @@ class SwitchController:
 
   def getPortForHost(self,host):
       return self.clientes[host]
+
+  def agregarValorFT(self,packet,puerto_sal):
+      msg = of.ofp_flow_mod()
+      """msg.match.dl_src = packet.src
+      msg.match.dl_dst = packet.dst
+      msg.match.nw_src= packet.payload.srcip
+      msg.match.nw_dst = packet.payload.dstip
+      msg.match.tp_src = packet.payload.payload.srcport
+      msg.match.tp_dst = packet.payload.payload.dstport"""
+
+      msg.actions.append(of.ofp_action_output(port = puerto_sal))
+      self.connection.send(fm)

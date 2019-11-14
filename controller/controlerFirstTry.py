@@ -113,14 +113,17 @@ class Controller:
     while prevSwitch[switchActual] is not None:
         camino.appendleft(switchActual)
         switchActual = prevSwitch[switchActual]
-	"""puerto = prevSwitch[switchActual].getPortFor(switchActual)
-        prevSwitch[switchActual].addLinkFromPortTo(packet.dst, puerto);
-        switchActual = prevSwitch[switchActual]
-    if camino:
-        camino.appendleft(switchActual)"""
 
+    camino.appendleft(switchControllerSrc.dpid)
     print("El camino es")
     print camino
+
+    while camino:
+        switch = camino.popleft()
+        if switch != switch_dst.dpid:
+            port = self.switches[switch].getPortFor(camino[0])
+            self.switches[switch].agregarValorFT(packet,port)
+
     #IdSigueinteSwitch = camino[1].dpid
 
     #x ahora uso el primer camino en la lista x q no se como sacar el minimo camino del diccionaio //superbug
