@@ -20,6 +20,7 @@ class Controller:
     core.call_when_ready(self.startup, ('openflow', 'openflow_discovery'))
 
   def startup(self):
+    #print("\n Inicio")
     """
     Esta funcion se encarga de inicializar el controller
     Agrega el controller como event handler para los eventos de
@@ -39,74 +40,91 @@ class Controller:
       self.connections.add(event.connection)
       sw = SwitchController(event.dpid, event.connection,self)
       self.switches[event.dpid] = sw
+      #print("\n Swith concetado")
       #print(event.dpid)
-      #print("holaaaaaaaaaaaaaa arriba esta el switch")
 
   def _handle_LinkEvent(self, event):
     """
     Esta funcion es llamada cada vez que openflow_discovery descubre un nuevo enlace
     """
     link = event.link
-
-    print("link es")
-    print(link)
+    #print("\n Cargando Link")
+    #print("link es")
+    #print(link)
     self.switches[link.dpid1].addLinkFromPortTo(link.port1,link.dpid2)
     self.switches[link.dpid2].addLinkFromPortTo(link.port2,link.dpid1)
 
-    #log.info("Link has been discovered from %s,%s to %s,%s", dpid_to_str(link.dpid1), link.port1, dpid_to_str(link.dpid2), link.port2)
-  def helpSwitchSendMsg(self,switchControllerSrc, packet):
+    #print("resultados")
+    #print(self.switches[link.dpid1].getHostsConectados())
+    #print(self.switches[link.dpid2].getHostsConectados())
 
+
+    #log.info("Link has been discovered from %s,%s to %s,%s", dpid_to_str(link.dpid1), link.port1, dpid_to_str(link.dpid2), link.port2)
+
+
+  def helpSwitchSendMsg(self,switchControllerSrc, packet):
+    #print("\n Buscando Ruta")
     #dijkstra
     #setup
     distancias = {}
     prevSwitch = {}
-    for node in self.switches:
-      distancias[node] = 99999
-      prevSwitch[node] = None
+    switchesAVisitar = []
+    for node in self.switches.keys():
+        distancias[node] = 99999
+        prevSwitch[node] = None
+        switchesAVisitar.append(node)
 
-    distancias[switchControllerSrc] = 0
+    distancias[switchControllerSrc.dpid] = 0
 
-    #busco dst mas chica a cada nodo dsd destino
-    switchesAVisitar = self.switches.copy()
-    finish = False
+    switchActual = switchControllerSrc.dpid
+    while len(switchesAVisitar) > 0:
+        switchActual = switchesAVisitar[0]
+        for switch in switchesAVisitar:
+            if distancias[switchActual] > distancias[switch]:
+                switchActual = switch
+        switchesAVisitar.remove(switchActual)
 
-    while not finish:
-        switchActual = min(
-                switchesAVisitar, key=lambda vertex: distancias[vertex])
-        if(distancias[switchActual] == 99999):
-            break
-        vecinos = switchActual.getVecinos()
+        vecinos = self.switches[switchActual].getVecinos()
         #mejora algun camino?
         for vecino in vecinos:
             distanciaNueva = distancias[switchActual] + 1
-            if distanciaNueva < distancias[switchActual]:
+            if distanciaNueva < distancias[vecino]:
+                print("ENTREEEEEEEEEEEEEEEEEEEEEEEE")
                 distancias[vecino] = distanciaNueva
                 prevSwitch[vecino] = switchActual
 
-        switchesAVisitar.remove(switchActual)
-
+    print(prevSwitch)
+    print ("SALIIIIIIIIIIIIIIIIIIIIIIIIIIIII")
     switch_dst = None
     for switch in self.switches.values():
+    	#print("Hots conectados:")
         #print(switch.getHostsConectados())
+    	#print("Hots buscado:")
         #print(packet.dst)
         if packet.dst in switch.getHostsConectados():
             switch_dst = switch
             break
     if switch_dst == None:
-        print("Problemaas")
+        print("No se encontro el Hots")
         return
 
     camino = deque()
-    switchActual = switch_dst
+    switchActual = switch_dst.dpid
     while prevSwitch[switchActual] is not None:
         camino.appendleft(switchActual)
         switchActual = prevSwitch[switchActual]
+	"""puerto = prevSwitch[switchActual].getPortFor(switchActual)
+        prevSwitch[switchActual].addLinkFromPortTo(packet.dst, puerto);
+        switchActual = prevSwitch[switchActual]
     if camino:
-        camino.appendleft(switchActual)
-    IdSigueinteSwitch = camino[1].dpid
+        camino.appendleft(switchActual)"""
+
+    print("El camino es")
+    print camino
+    #IdSigueinteSwitch = camino[1].dpid
 
     #x ahora uso el primer camino en la lista x q no se como sacar el minimo camino del diccionaio //superbug
-    switchControllerSrc.sendPacketThourgh(packet,switchControllerSrc.getPortFor(IdSigueinteSwitch))
+    #switchControllerSrc.sendPacketThourgh(packet,switchControllerSrc.getPortFor(IdSigueinteSwitch))
 
 
 
