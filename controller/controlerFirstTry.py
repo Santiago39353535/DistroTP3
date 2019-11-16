@@ -63,6 +63,8 @@ class Controller:
 
 
   def helpSwitchSendMsg(self,switchControllerSrc, packet):
+    if ( packet.type != packet.IP_TYPE ) :
+        return
     #print("\n Buscando Ruta")
     #dijkstra
     #setup
@@ -89,12 +91,12 @@ class Controller:
         for vecino in vecinos:
             distanciaNueva = distancias[switchActual] + 1
             if distanciaNueva < distancias[vecino]:
-                print("ENTREEEEEEEEEEEEEEEEEEEEEEEE")
+                print("ENTRE")
                 distancias[vecino] = distanciaNueva
                 prevSwitch[vecino] = switchActual
 
     print(prevSwitch)
-    print ("SALIIIIIIIIIIIIIIIIIIIIIIIIIIIII")
+    print ("SALI")
     switch_dst = None
     for switch in self.switches.values():
     	#print("Hots conectados:")
@@ -109,20 +111,32 @@ class Controller:
         return
 
     camino = deque()
-    switchActual = switch_dst.dpid
+    switchActual = prevSwitch.keys()[-1]#switch_dst.dpid
     while prevSwitch[switchActual] is not None:
+        print ("cargando a la tabla")
+        switchAnterior = prevSwitch[switchActual]
+        #port = self.switches[switchAnterior].getPortFor(switchActual)
+        #self.switches[switchAnterior].agregarValorFT(packet,port)
+        port = self.switches[switchActual].getPortFor(switchAnterior)
+        self.switches[switchActual].agregarValorFT(packet,port)
         camino.appendleft(switchActual)
         switchActual = prevSwitch[switchActual]
 
     camino.appendleft(switchControllerSrc.dpid)
     print("El camino es")
     print camino
+    switchControllerSrc.sendPacketThourgh(packet,2);
 
-    while camino:
-        switch = camino.popleft()
-        if switch != switch_dst.dpid:
-            port = self.switches[switch].getPortFor(camino[0])
-            self.switches[switch].agregarValorFT(packet,port)
+    #while camino:
+    #    print("El paso uno")
+        #switch = camino.popleft()
+    #    print (switch)
+    #    print (switch_dst.dpid)
+    #    if switch == switch_dst.dpid:
+    #        print ("cargando a la tabla")
+    #        port = self.switches[switch].getPortFor(camino)
+    #        self.switches[switch].agregarValorFT(packet,port)
+
 
     #IdSigueinteSwitch = camino[1].dpid
 

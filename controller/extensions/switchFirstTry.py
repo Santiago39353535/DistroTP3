@@ -54,7 +54,10 @@ class SwitchController:
       return self.linkTo.keys()
 
 
-  def sendPacketThourgh(self,msg,out_port):
+  def sendPacketThourgh(self,msg2,out_port):
+    print ("quiero mandarlo por")
+    print (out_port)
+    msg = of.ofp_packet_out(in_port=of.OFPP_NONE)
     action = of.ofp_action_output(port = out_port)
     msg.actions.append(action)
 
@@ -71,13 +74,13 @@ class SwitchController:
       return self.clientes[host]
 
   def agregarValorFT(self,packet,puerto_sal):
+      print("Agregando Valor")
       msg = of.ofp_flow_mod()
-      """msg.match.dl_src = packet.src
+      msg.command = of.OFPFC_ADD
+      msg.match.dl_src = packet.src
       msg.match.dl_dst = packet.dst
       msg.match.nw_src= packet.payload.srcip
       msg.match.nw_dst = packet.payload.dstip
-      msg.match.tp_src = packet.payload.payload.srcport
-      msg.match.tp_dst = packet.payload.payload.dstport"""
-
       msg.actions.append(of.ofp_action_output(port = puerto_sal))
-      self.connection.send(fm)
+      #print(msg)
+      self.connection.send(msg);
