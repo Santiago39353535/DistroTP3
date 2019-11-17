@@ -26,13 +26,18 @@ class SwitchController:
     #print(event.port)
     #print(self.linkTo)
     if (event.port not in self.linkTo.values()):
+        print("Agregando Valor Hots")
+        print(packet)
+        print(event.port)
         self.clientes[packet.dst] = event.port
         fm = of.ofp_flow_mod()
-        fm.match.dl_dst = packet.src
+        fm.command = of.OFPFC_ADD
+        fm.match.dl_dst = packet.dst
         fm.actions.append(of.ofp_action_output(port = event.port))
+        #print(fm)
         self.connection.send(fm)
 
-
+        #self.agregarValorHotsFT(packet,event.port)
 
 
     #La idea era si tenia la coneccion. Mandarlo por ese puerto.
@@ -73,14 +78,39 @@ class SwitchController:
   def getPortForHost(self,host):
       return self.clientes[host]
 
-  def agregarValorFT(self,packet,puerto_sal):
-      print("Agregando Valor")
+  def agregarValorHotsFT(self,packet,puerto_sal):
+      #print("Agregando Valor Hots")
+      #print(packet)
       msg = of.ofp_flow_mod()
       msg.command = of.OFPFC_ADD
-      msg.match.dl_src = packet.src
-      msg.match.dl_dst = packet.dst
-      msg.match.nw_src= packet.payload.srcip
-      msg.match.nw_dst = packet.payload.dstip
+      msg.match.dl_dst = packet.src
+      msg.match.nw_dst = packet.payload.srcip
       msg.actions.append(of.ofp_action_output(port = puerto_sal))
+
+      #print(msg)
+      self.connection.send(msg);
+
+
+
+  def agregarValorFT(self,packet,puerto_sal):
+      print("Agregando Valor")
+      #print(packet)
+      msg = of.ofp_flow_mod()
+      msg.command = of.OFPFC_ADD
+      #msg.match.dl_type = packet.type
+      #msg.match.dl_src = packet.src
+      #msg.match.dl_dst = packet.dst
+      #msg.match.nw_src= packet.payload.srcip
+      #msg.match.nw_dst = packet.payload.dstip
+      msg.actions.append(of.ofp_action_output(port = puerto_sal))
+
+      #msg.data = packet.ofp
+      #msg.match.in_port = in_port
+      #msg.match.nw_proto = packet.payload.protocol
+      #if (packet.payload.protocol == packet.payload.TCP_PROTOCOL or
+        #packet.payload.protocol == packet.payload.UDP_PROTOCOL):
+        #msg.match.tp_src = packet.payload.srcport
+        #msg.match.tp_dst = packet.payload.dstport
+
       #print(msg)
       self.connection.send(msg);

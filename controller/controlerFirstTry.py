@@ -65,7 +65,7 @@ class Controller:
   def helpSwitchSendMsg(self,switchControllerSrc, packet):
     if ( packet.type != packet.IP_TYPE ) :
         return
-    #print("\n Buscando Ruta")
+    print("\n Buscando Ruta")
     #dijkstra
     #setup
     distancias = {}
@@ -91,12 +91,13 @@ class Controller:
         for vecino in vecinos:
             distanciaNueva = distancias[switchActual] + 1
             if distanciaNueva < distancias[vecino]:
-                print("ENTRE")
+                #print("ENTRE")
                 distancias[vecino] = distanciaNueva
                 prevSwitch[vecino] = switchActual
 
+    print("Camino Es")
     print(prevSwitch)
-    print ("SALI")
+    #print ("SALI")
     switch_dst = None
     for switch in self.switches.values():
     	#print("Hots conectados:")
@@ -112,20 +113,31 @@ class Controller:
 
     camino = deque()
     switchActual = prevSwitch.keys()[-1]#switch_dst.dpid
+    print ("cargando a la tabla de, a destino")
+    print (switchActual)
+    print (packet.src)
+    self.switches[switchActual].agregarValorFT(packet,2)
+
+    #if (packet.src in self.switches[switchActual].getHostsConectados()):
+    #    port = self.switches[switchActual].getPortForHost(packet.src)
+    #    self.switches[switchActual].agregarValorFT(packet,port)
+
     while prevSwitch[switchActual] is not None:
-        print ("cargando a la tabla")
+        print ("cargando a la tabla de, a ")
         switchAnterior = prevSwitch[switchActual]
-        #port = self.switches[switchAnterior].getPortFor(switchActual)
-        #self.switches[switchAnterior].agregarValorFT(packet,port)
+        print (switchAnterior)
+        print (switchActual)
+        port = self.switches[switchAnterior].getPortFor(switchActual)
+        self.switches[switchAnterior].agregarValorFT(packet,port)
         port = self.switches[switchActual].getPortFor(switchAnterior)
         self.switches[switchActual].agregarValorFT(packet,port)
         camino.appendleft(switchActual)
         switchActual = prevSwitch[switchActual]
 
     camino.appendleft(switchControllerSrc.dpid)
-    print("El camino es")
-    print camino
-    switchControllerSrc.sendPacketThourgh(packet,2);
+    #print("El camino es")
+    #print camino
+    #switchControllerSrc.sendPacketThourgh(packet,2);
 
     #while camino:
     #    print("El paso uno")

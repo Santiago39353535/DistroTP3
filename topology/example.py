@@ -25,6 +25,7 @@ class Example( Topo ):
     """
     self.addLink(sw1, sw2) # Conectando los dos switches
     self.addLink(sw1, h1) # Conectando el sw1 con h1
+    #self.addLink(sw2, h1) # Conectando el sw1 con h1
     self.addLink(sw2, h2) # Conectando el sw2 con h2
 
 topos = { 'example': Example }
