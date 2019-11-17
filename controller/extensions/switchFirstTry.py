@@ -22,23 +22,22 @@ class SwitchController:
     #print self.__dict__
     packet = event.parsed
 
+    log.info("Packet arrived to switch %s from %s to %s", self.dpid, packet.src, packet.dst)
+
     #si viene de un host q no tengo anotado lo agrego a la lista de hosts alcanzables
     #print(event.port)
     #print(self.linkTo)
     if (event.port not in self.linkTo.values()):
+        self.clientes[packet.src] = event.port
         print("Agregando Valor Hots")
         print(packet)
         print(event.port)
-        self.clientes[packet.dst] = event.port
-        fm = of.ofp_flow_mod()
-        fm.command = of.OFPFC_ADD
-        fm.match.dl_dst = packet.dst
-        fm.actions.append(of.ofp_action_output(port = event.port))
-        #print(fm)
-        self.connection.send(fm)
 
-        #self.agregarValorHotsFT(packet,event.port)
 
+
+    #descarto ip6
+    if packet.type != packet.IP_TYPE:
+        return
 
     #La idea era si tenia la coneccion. Mandarlo por ese puerto.
 	#Pero el puerto no se esta guardando como un INT. Sino como un EthAddr
@@ -49,8 +48,8 @@ class SwitchController:
       #return
 
     #ask4help
-    self.boss_controler.helpSwitchSendMsg(self, packet)
-    log.info("Packet arrived to switch %s from %s to %s", self.dpid, packet.src, packet.dst)
+    self.boss_controler.helpSwitchSendMsg(self, event)
+
 
   def addLinkFromPortTo(self,port,dpid):
       self.linkTo[dpid] = port
@@ -114,3 +113,20 @@ class SwitchController:
 
       #print(msg)
       self.connection.send(msg);
+
+  def route_msg(self, in_port, exit_port,packet,event):
+    msg = of.ofp_flow_mod()
+
+    msg.data = event.ofp
+    msg.command = of.OFPFC_ADD
+    msg.match.dl_dst = packet.dst
+    msg.match.dl_src = packet.src
+    msg.match.in_port = in_port
+    msg.match.dl_type = packet.type
+    msg.match.nw_src = packet.payload.srcip
+    msg.match.nw_dst = packet.payload.dstip
+    msg.match.nw_proto = packet.payload.protocol
+
+    msg.actions.append(of.ofp_action_output(port = exit_port))
+    log.info("Sending to switch: %s from %s to %s port in: %s out: %s.", self.dpid, packet.src, packet.dst, in_port, exit_port)
+    self.connection.send(msg)

@@ -63,10 +63,13 @@ class Controller:
     #log.info("Link has been discovered from %s,%s to %s,%s", dpid_to_str(link.dpid1), link.port1, dpid_to_str(link.dpid2), link.port2)
 
 
-  def helpSwitchSendMsg(self,switchControllerSrc, packet):
+  def helpSwitchSendMsg(self,switchControllerSrc, event):
+    packet = event.parsed
+
     if ( packet.type != packet.IP_TYPE ) :
         return
-    print("\n Buscando Ruta")
+
+    log.info("\n Buscando Ruta de %s, a %s, llamado por %s", packet.src, packet.dst,switchControllerSrc.dpid)
     #dijkstra
     #setup
     distancias = {}
@@ -90,24 +93,23 @@ class Controller:
         vecinos = self.switches[switchActual].getVecinos()
         #mejora algun camino?
         for vecino in vecinos:
-            distanciaNueva = distancias[switchActual] + self.switches[switchActual].peso
+            distanciaNueva = distancias[switchActual]
             if distanciaNueva < distancias[vecino]:
                 #print("ENTRE")
                 distancias[vecino] = distanciaNueva
                 prevSwitch[vecino] = switchActual
 
-    print("Camino Es")
+    print("prevSwitch")
     print(prevSwitch)
     #print ("SALI")
-    for switch in prevSwitch.keys():
-        self.switches[switch].peso = self.switches[switch].peso + 1
 
     switch_dst = None
     for switch in self.switches.values():
-    	#print("Hots conectados:")
-        #print(switch.getHostsConectados())
-    	#print("Hots buscado:")
-        #print(packet.dst)
+        log.info("Switch %s", dpid_to_str(switch.dpid))
+    	print("Hots conectados:")
+        print(switch.getHostsConectados())
+    	print("Hots buscado:")
+        print(packet.dst)
         if packet.dst in switch.getHostsConectados():
             switch_dst = switch
             break
@@ -116,49 +118,34 @@ class Controller:
         return
 
     camino = deque()
-    switchActual = prevSwitch.keys()[-1]#switch_dst.dpid
-    print ("cargando a la tabla de, a destino")
-    print (switchActual)
-    print (packet.src)
-    self.switches[switchActual].agregarValorFT(packet,2)
 
     #if (packet.src in self.switches[switchActual].getHostsConectados()):
     #    port = self.switches[switchActual].getPortForHost(packet.src)
     #    self.switches[switchActual].agregarValorFT(packet,port)
-
+    print("prevSwitch")
+    print(prevSwitch)
+    switchActual = switch_dst.dpid
+    print("switchActual")
+    print(switchActual)
     while prevSwitch[switchActual] is not None:
-        print ("cargando a la tabla de, a ")
         switchAnterior = prevSwitch[switchActual]
-        print (switchAnterior)
-        print (switchActual)
-        port = self.switches[switchAnterior].getPortFor(switchActual)
-        self.switches[switchAnterior].agregarValorFT(packet,port)
-        port = self.switches[switchActual].getPortFor(switchAnterior)
-        self.switches[switchActual].agregarValorFT(packet,port)
         camino.appendleft(switchActual)
         switchActual = prevSwitch[switchActual]
 
     camino.appendleft(switchControllerSrc.dpid)
-    #print("El camino es")
-    #print camino
-    #switchControllerSrc.sendPacketThourgh(packet,2);
-
-    #while camino:
-    #    print("El paso uno")
-        #switch = camino.popleft()
-    #    print (switch)
-    #    print (switch_dst.dpid)
-    #    if switch == switch_dst.dpid:
-    #        print ("cargando a la tabla")
-    #        port = self.switches[switch].getPortFor(camino)
-    #        self.switches[switch].agregarValorFT(packet,port)
+    print("El camino es")
+    print camino
 
 
-    #IdSigueinteSwitch = camino[1].dpid
 
-    #x ahora uso el primer camino en la lista x q no se como sacar el minimo camino del diccionaio //superbug
-    #switchControllerSrc.sendPacketThourgh(packet,switchControllerSrc.getPortFor(IdSigueinteSwitch))
+    #for i in range(0,len(camino)-1):
 
+    if(len(camino)==1):
+        self.switches[camino[0]].route_msg(
+                self.switches[camino[0]].getPortForHost(packet.src),
+                self.switches[camino[0]].getPortForHost(packet.dst),
+                packet,
+                event)
 
 
 def launch():

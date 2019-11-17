@@ -13,7 +13,7 @@ class Example( Topo ):
 
     # Primero creamos los dos switches
     sw1 = self.addSwitch('sw1')
-    sw2 = self.addSwitch('sw2')
+    #sw2 = self.addSwitch('sw2')
 
     # Luego creamos los dos hosts
     h1 = self.addHost('h1')
@@ -23,9 +23,9 @@ class Example( Topo ):
     Por ultimo, creamos los links para terminar con una topologia con la siguiente forma
     h1 --- sw1 ---- sw2 ---- h2
     """
-    self.addLink(sw1, sw2) # Conectando los dos switches
+    #self.addLink(sw1, sw2) # Conectando los dos switches
     self.addLink(sw1, h1) # Conectando el sw1 con h1
     #self.addLink(sw2, h1) # Conectando el sw1 con h1
-    self.addLink(sw2, h2) # Conectando el sw2 con h2
-
+    #self.addLink(sw2, h2) # Conectando el sw2 con h2
+    self.addLink(sw1, h2)
 topos = { 'example': Example }
