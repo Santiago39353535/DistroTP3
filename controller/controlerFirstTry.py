@@ -60,7 +60,11 @@ class Controller:
     #print(self.switches[link.dpid2].getHostsConectados())
 
 
-    #log.info("Link has been discovered from %s,%s to %s,%s", dpid_to_str(link.dpid1), link.port1, dpid_to_str(link.dpid2), link.port2)
+    log.info("Guarde id: %s port: %s conx id: %s port: %s",
+     dpid_to_str(link.dpid1),
+     self.switches[link.dpid1].getPortFor(link.dpid2),
+     dpid_to_str(link.dpid2),
+     self.switches[link.dpid2].getPortFor(link.dpid1))
 
 
   def helpSwitchSendMsg(self,switchControllerSrc, event):
@@ -141,12 +145,17 @@ class Controller:
     #for i in range(0,len(camino)-1):
 
     if(len(camino)==1):
-        self.switches[camino[0]].route_msg(
-                self.switches[camino[0]].getPortForHost(packet.src),
+        self.switches[camino[0]].setFWT(
+                event.port,
                 self.switches[camino[0]].getPortForHost(packet.dst),
                 packet,
                 event)
-
+    else:
+        self.switches[camino[0]].setFWT(
+                event.port,
+                self.switches[camino[0]].getPortFor(camino[1]),
+                packet,
+                event)
 
 def launch():
   # Inicializando el modulo openflow_discovery

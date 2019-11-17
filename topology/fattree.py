@@ -11,9 +11,10 @@ class FatTree(Topo):
         for lv in range(niveles):
             nivel = []
             for i in range(2**lv):
-                sw = self.addSwitch(prefijoSW+'_'+str(lv)+'_'+str(i))
+                sw = self.addSwitch(prefijoSW+'_'+str(lv)+str(i))
+
                 nivel.append(sw)
-            self.my_switchs.append(nivel)            
+            self.my_switchs.append(nivel)
 
         ###Creacion hosts
         prefijoHost = "h"

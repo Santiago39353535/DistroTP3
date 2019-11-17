@@ -22,16 +22,13 @@ class SwitchController:
     #print self.__dict__
     packet = event.parsed
 
-    log.info("Packet arrived to switch %s from %s to %s", self.dpid, packet.src, packet.dst)
 
     #si viene de un host q no tengo anotado lo agrego a la lista de hosts alcanzables
     #print(event.port)
     #print(self.linkTo)
     if (event.port not in self.linkTo.values()):
         self.clientes[packet.src] = event.port
-        print("Agregando Valor Hots")
-        print(packet)
-        print(event.port)
+
 
 
 
@@ -39,6 +36,7 @@ class SwitchController:
     if packet.type != packet.IP_TYPE:
         return
 
+    log.info("Packet arrived to switch %s from %s to %s", self.dpid, packet.src, packet.dst)
     #La idea era si tenia la coneccion. Mandarlo por ese puerto.
 	#Pero el puerto no se esta guardando como un INT. Sino como un EthAddr
     #if (packet.dst in self.linkTo.keys()):
@@ -114,7 +112,7 @@ class SwitchController:
       #print(msg)
       self.connection.send(msg);
 
-  def route_msg(self, in_port, exit_port,packet,event):
+  def setFWT(self, in_port, exit_port,packet,event):
     msg = of.ofp_flow_mod()
 
     msg.data = event.ofp
