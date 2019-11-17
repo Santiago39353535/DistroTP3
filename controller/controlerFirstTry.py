@@ -39,6 +39,7 @@ class Controller:
     if (event.connection not in self.connections):
       self.connections.add(event.connection)
       sw = SwitchController(event.dpid, event.connection,self)
+      sw.peso = 1
       self.switches[event.dpid] = sw
       #print("\n Swith concetado")
       #print(event.dpid)
@@ -89,7 +90,7 @@ class Controller:
         vecinos = self.switches[switchActual].getVecinos()
         #mejora algun camino?
         for vecino in vecinos:
-            distanciaNueva = distancias[switchActual] + 1
+            distanciaNueva = distancias[switchActual] + self.switches[switchActual].peso
             if distanciaNueva < distancias[vecino]:
                 #print("ENTRE")
                 distancias[vecino] = distanciaNueva
@@ -98,6 +99,9 @@ class Controller:
     print("Camino Es")
     print(prevSwitch)
     #print ("SALI")
+    for switch in prevSwitch.keys():
+        self.switches[switch].peso = self.switches[switch].peso + 1
+
     switch_dst = None
     for switch in self.switches.values():
     	#print("Hots conectados:")
