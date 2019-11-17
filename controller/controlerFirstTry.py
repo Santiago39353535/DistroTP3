@@ -49,15 +49,20 @@ class Controller:
     Esta funcion es llamada cada vez que openflow_discovery descubre un nuevo enlace
     """
     link = event.link
-    #print("\n Cargando Link")
-    #print("link es")
-    #print(link)
-    self.switches[link.dpid1].addLinkFromPortTo(link.port1,link.dpid2)
-    self.switches[link.dpid2].addLinkFromPortTo(link.port2,link.dpid1)
 
-    #print("resultados")
-    #print(self.switches[link.dpid1].getHostsConectados())
-    #print(self.switches[link.dpid2].getHostsConectados())
+    if not event.removed:
+        log.info("Link has been discovered from %s,%s to %s,%s", dpid_to_str(link.dpid1), link.port1,  dpid_to_str(link.dpid2), link.port2)
+        self.switches[link.dpid1].addLinkFromPortTo(link.port1,link.dpid2)
+        self.switches[link.dpid2].addLinkFromPortTo(link.port2,link.dpid1)
+    else:
+        log.info("Link has been discard from %s,%s to %s,%s", dpid_to_str(link.dpid1), link.port1,  dpid_to_str(link.dpid2), link.port2)
+        self.switches[link.dpid1].removeLinkFromPortTo(link.dpid2)
+        self.switches[link.dpid2].removeLinkFromPortTo(link.dpid1)
+
+    for switch in self.switches.values():
+        switch.vaciarReglas();
+#        self.switches[link.dpid1].clean_routes()
+#        self.switches[link.dpid2].clean_routes()
 
 
     log.info("Guarde id: %s port: %s conx id: %s port: %s",

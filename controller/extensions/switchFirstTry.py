@@ -52,6 +52,10 @@ class SwitchController:
   def addLinkFromPortTo(self,port,dpid):
       self.linkTo[dpid] = port
 
+  def removeLinkFromPortTo(self,dpid):
+      if dpid in self.linkTo.keys():
+          self.linkTo.pop(dpid)
+
   def getVecinos(self):
       return self.linkTo.keys()
 
@@ -111,6 +115,14 @@ class SwitchController:
 
       #print(msg)
       self.connection.send(msg);
+
+
+  def vaciarReglas(self):
+      msg = of.ofp_flow_mod(command=of.OFPFC_DELETE)
+      self.connection.send(msg)
+      #for self.connection in core.openflow.connections:
+        #  self.connection.send(msg)
+         # log.debug("Clearing all flows from %s." % (dpidToStr(connection.dpid),))
 
   def setFWT(self, in_port, exit_port,packet,event):
     msg = of.ofp_flow_mod()
