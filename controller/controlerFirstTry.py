@@ -7,8 +7,7 @@ from extensions.switchFirstTry import SwitchController
 from collections import deque
 
 log = core.getLogger()
-
-
+pesoDeHop = 100000000
 class Controller:
   def __init__ (self):
     self.connections = set()
@@ -35,7 +34,7 @@ class Controller:
     Esta funcion es llamada cada vez que un nuevo switch establece conexion
     Se encarga de crear un nuevo switch controller para manejar los eventos de cada switch
     """
-    log.info("Switch %s has come up.", dpid_to_str(event.dpid))
+    #log.info("Switch %s has come up.", dpid_to_str(event.dpid))
     if (event.connection not in self.connections):
       self.connections.add(event.connection)
       sw = SwitchController(event.dpid, event.connection,self)
@@ -49,27 +48,22 @@ class Controller:
     Esta funcion es llamada cada vez que openflow_discovery descubre un nuevo enlace
     """
     link = event.link
+    #print("\n Cargando Link")
+    #print("link es")
+    #print(link)
+    self.switches[link.dpid1].addLinkFromPortTo(link.port1,link.dpid2)
+    self.switches[link.dpid2].addLinkFromPortTo(link.port2,link.dpid1)
 
-    if not event.removed:
-        log.info("Link has been discovered from %s,%s to %s,%s", dpid_to_str(link.dpid1), link.port1,  dpid_to_str(link.dpid2), link.port2)
-        self.switches[link.dpid1].addLinkFromPortTo(link.port1,link.dpid2)
-        self.switches[link.dpid2].addLinkFromPortTo(link.port2,link.dpid1)
-    else:
-        log.info("Link has been discard from %s,%s to %s,%s", dpid_to_str(link.dpid1), link.port1,  dpid_to_str(link.dpid2), link.port2)
-        self.switches[link.dpid1].removeLinkFromPortTo(link.dpid2)
-        self.switches[link.dpid2].removeLinkFromPortTo(link.dpid1)
-
-    for switch in self.switches.values():
-        switch.vaciarReglas();
-#        self.switches[link.dpid1].clean_routes()
-#        self.switches[link.dpid2].clean_routes()
+    #print("resultados")
+    #print(self.switches[link.dpid1].getHostsConectados())
+    #print(self.switches[link.dpid2].getHostsConectados())
 
 
-    log.info("Guarde id: %s port: %s conx id: %s port: %s",
-     dpid_to_str(link.dpid1),
-     self.switches[link.dpid1].getPortFor(link.dpid2),
-     dpid_to_str(link.dpid2),
-     self.switches[link.dpid2].getPortFor(link.dpid1))
+    #log.info("Guarde id: %s port: %s conx id: %s port: %s",
+     #dpid_to_str(link.dpid1),
+     #self.switches[link.dpid1].getPortFor(link.dpid2),
+     #dpid_to_str(link.dpid2),
+     #self.switches[link.dpid2].getPortFor(link.dpid1))
 
 
   def helpSwitchSendMsg(self,switchControllerSrc, event):
@@ -78,14 +72,14 @@ class Controller:
     if ( packet.type != packet.IP_TYPE ) :
         return
 
-    log.info("\n Buscando Ruta de %s, a %s, llamado por %s", packet.src, packet.dst,switchControllerSrc.dpid)
+    #log.info("\n Buscando Ruta de %s, a %s, llamado por %s", packet.src, packet.dst,switchControllerSrc.dpid)
     #dijkstra
     #setup
     distancias = {}
     prevSwitch = {}
     switchesAVisitar = []
     for node in self.switches.keys():
-        distancias[node] = 99999
+        distancias[node] = 99999999999
         prevSwitch[node] = None
         switchesAVisitar.append(node)
 
@@ -102,23 +96,23 @@ class Controller:
         vecinos = self.switches[switchActual].getVecinos()
         #mejora algun camino?
         for vecino in vecinos:
-            distanciaNueva = distancias[switchActual]
+            distanciaNueva = distancias[switchActual] + pesoDeHop + self.switches[switchActual].getPesoALink(vecino)
             if distanciaNueva < distancias[vecino]:
                 #print("ENTRE")
                 distancias[vecino] = distanciaNueva
                 prevSwitch[vecino] = switchActual
 
-    print("prevSwitch")
-    print(prevSwitch)
+    #print("prevSwitch")
+    #print(prevSwitch)
     #print ("SALI")
 
     switch_dst = None
     for switch in self.switches.values():
-        log.info("Switch %s", dpid_to_str(switch.dpid))
-    	print("Hots conectados:")
-        print(switch.getHostsConectados())
-    	print("Hots buscado:")
-        print(packet.dst)
+        #log.info("Switch %s", dpid_to_str(switch.dpid))
+    	#print("Hots conectados:")
+        #print(switch.getHostsConectados())
+    	#print("Hots buscado:")
+        #print(packet.dst)
         if packet.dst in switch.getHostsConectados():
             switch_dst = switch
             break
@@ -131,19 +125,20 @@ class Controller:
     #if (packet.src in self.switches[switchActual].getHostsConectados()):
     #    port = self.switches[switchActual].getPortForHost(packet.src)
     #    self.switches[switchActual].agregarValorFT(packet,port)
-    print("prevSwitch")
-    print(prevSwitch)
+    #print("prevSwitch")
+    #print(prevSwitch)
     switchActual = switch_dst.dpid
-    print("switchActual")
-    print(switchActual)
+    #print("switchActual")
+    #print(switchActual)
+
     while prevSwitch[switchActual] is not None:
         switchAnterior = prevSwitch[switchActual]
         camino.appendleft(switchActual)
         switchActual = prevSwitch[switchActual]
 
     camino.appendleft(switchControllerSrc.dpid)
-    print("El camino es")
-    print camino
+    #print("El camino es")
+    #print camino
 
 
 
@@ -156,6 +151,8 @@ class Controller:
                 packet,
                 event)
     else:
+        print(camino[1],camino[0])
+        self.switches[camino[0]].increaseLinkWeight(camino[1])
         self.switches[camino[0]].setFWT(
                 event.port,
                 self.switches[camino[0]].getPortFor(camino[1]),

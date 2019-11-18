@@ -11,6 +11,7 @@ class SwitchController:
     # El SwitchController se agrega como handler de los eventos del switch
     self.connection.addListeners(self)
     self.linkTo = {}
+    self.linkWeight = {}
     self.clientes = {}
     self.addMiIP = {}
 
@@ -36,7 +37,7 @@ class SwitchController:
     if packet.type != packet.IP_TYPE:
         return
 
-    log.info("Packet arrived to switch %s from %s to %s", self.dpid, packet.src, packet.dst)
+    #log.info("Packet arrived to switch %s from %s to %s", self.dpid, packet.src, packet.dst)
     #La idea era si tenia la coneccion. Mandarlo por ese puerto.
 	#Pero el puerto no se esta guardando como un INT. Sino como un EthAddr
     #if (packet.dst in self.linkTo.keys()):
@@ -51,18 +52,15 @@ class SwitchController:
 
   def addLinkFromPortTo(self,port,dpid):
       self.linkTo[dpid] = port
-
-  def removeLinkFromPortTo(self,dpid):
-      if dpid in self.linkTo.keys():
-          self.linkTo.pop(dpid)
+      self.linkWeight[dpid] = 0
 
   def getVecinos(self):
       return self.linkTo.keys()
 
 
   def sendPacketThourgh(self,msg2,out_port):
-    print ("quiero mandarlo por")
-    print (out_port)
+    #print ("quiero mandarlo por")
+    #print (out_port)
     msg = of.ofp_packet_out(in_port=of.OFPP_NONE)
     action = of.ofp_action_output(port = out_port)
     msg.actions.append(action)
@@ -79,6 +77,11 @@ class SwitchController:
   def getPortForHost(self,host):
       return self.clientes[host]
 
+  def increaseLinkWeight(self,dpid):
+      self.linkWeight[dpid] = self.linkWeight[dpid]+1
+  def getPesoALink(self,dpid):
+      return self.linkWeight[dpid]
+
   def agregarValorHotsFT(self,packet,puerto_sal):
       #print("Agregando Valor Hots")
       #print(packet)
@@ -94,7 +97,7 @@ class SwitchController:
 
 
   def agregarValorFT(self,packet,puerto_sal):
-      print("Agregando Valor")
+    #  print("Agregando Valor")
       #print(packet)
       msg = of.ofp_flow_mod()
       msg.command = of.OFPFC_ADD
@@ -116,14 +119,6 @@ class SwitchController:
       #print(msg)
       self.connection.send(msg);
 
-
-  def vaciarReglas(self):
-      msg = of.ofp_flow_mod(command=of.OFPFC_DELETE)
-      self.connection.send(msg)
-      #for self.connection in core.openflow.connections:
-        #  self.connection.send(msg)
-         # log.debug("Clearing all flows from %s." % (dpidToStr(connection.dpid),))
-
   def setFWT(self, in_port, exit_port,packet,event):
     msg = of.ofp_flow_mod()
 
@@ -138,5 +133,5 @@ class SwitchController:
     msg.match.nw_proto = packet.payload.protocol
 
     msg.actions.append(of.ofp_action_output(port = exit_port))
-    log.info("Sending to switch: %s from %s to %s port in: %s out: %s.", self.dpid, packet.src, packet.dst, in_port, exit_port)
+#log.info("Sending to switch: %s from %s to %s port in: %s out: %s.", self.dpid, packet.src, packet.dst, in_port, exit_port)
     self.connection.send(msg)
