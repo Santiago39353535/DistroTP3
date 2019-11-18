@@ -54,6 +54,16 @@ class SwitchController:
       self.linkTo[dpid] = port
       self.linkWeight[dpid] = 0
 
+  def removeLinkFromPortTo(self, dpid):
+      if (dpid in self.linkTo):
+          self.linkTo.pop(dpid)
+
+  def vaciarReglas(self):
+      msg = of.ofp_flow_mod(command=of.OFPFC_DELETE)
+      self.connection.send(msg)
+      for keys in self.linkWeight.keys():
+          self.linkWeight[keys] = 0
+
   def getVecinos(self):
       return self.linkTo.keys()
 
